@@ -18,13 +18,6 @@
       font-family: 'Plus Jakarta Sans', sans-serif;
       -webkit-tap-highlight-color: transparent;
     }
-    .no-scrollbar::-webkit-scrollbar {
-      display: none;
-    }
-    .no-scrollbar {
-      -ms-overflow-style: none;
-      scrollbar-width: none;
-    }
   </style>
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen pb-24 selection:bg-orange-500 selection:text-white">
@@ -38,7 +31,9 @@
         </div>
         <div>
           <h1 class="font-bold text-lg leading-tight text-white">BBQ & Camp</h1>
-          <p class="text-xs font-medium text-slate-400">Piknik & Patungan Rombongan</p>
+          <p class="text-xs font-medium text-slate-400 flex items-center gap-1">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sync Online
+          </p>
         </div>
       </div>
 
@@ -153,40 +148,46 @@
     </main>
   </div>
 
-  <script>
-    const defaultBelanja = [
-      { id: 1, nama: 'Daging Sapi / Ayam BBQ', qty: 2, estimasi: 75000, aktual: 75000, bought: true },
-      { id: 2, nama: 'Sosis & Bakso', qty: 1, estimasi: 50000, aktual: 48000, bought: true },
-      { id: 3, nama: 'Saus BBQ & Mayones', qty: 2, estimasi: 15000, aktual: 0, bought: false },
-      { id: 4, nama: 'Arang Batang', qty: 2, estimasi: 12500, aktual: 0, bought: false }
-    ];
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    const defaultBawaan = [
-      { id: 1, nama: 'Alat Panggangan & Capitan', packed: true },
-      { id: 2, nama: 'Tikar / Matras Outdoor', packed: true },
-      { id: 3, nama: 'Minyak Goreng & Kuas', packed: false }
-    ];
+    // Konfigurasi Firebase Asli Kamu
+    const firebaseConfig = {
+      apiKey: "AIzaSyAWQjX4-dUtDOHzVCgDZqlXSzzEjCk4tAs",
+      authDomain: "bbq-planner-a6b2a.firebaseapp.com",
+      databaseURL: "https://bbq-planner-a6b2a-default-rtdb.firebaseio.com",
+      projectId: "bbq-planner-a6b2a",
+      storageBucket: "bbq-planner-a6b2a.firebasestorage.app",
+      messagingSenderId: "47450695980",
+      appId: "1:47450695980:web:83ddfc0e29739657eb6489"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dbRef = ref(db, 'bbq_data');
 
     let appState = {
       people: 4,
-      belanja: defaultBelanja,
-      bawaan: defaultBawaan
+      belanja: [],
+      bawaan: []
     };
 
-    function loadData() {
-      const savedData = localStorage.getItem('bbq_planner_state_v5');
-      if (savedData) {
-        try {
-          appState = JSON.parse(savedData);
-        } catch (e) {
-          console.error("Error load data", e);
-        }
+    // Sinkronisasi data realtime dari Firebase Cloud
+    onValue(dbRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        appState = {
+          people: data.people || 1,
+          belanja: data.belanja || [],
+          bawaan: data.bawaan || []
+        };
       }
-    }
-
-    function saveData() {
-      localStorage.setItem('bbq_planner_state_v5', JSON.stringify(appState));
       render();
+    });
+
+    function pushData() {
+      set(dbRef, appState);
     }
 
     function formatRp(value) {
@@ -230,7 +231,7 @@
     peopleInput.addEventListener('change', (e) => {
       const val = parseInt(e.target.value);
       appState.people = val > 0 ? val : 1;
-      saveData();
+      pushData();
     });
 
     formBelanja.addEventListener('submit', (e) => {
@@ -240,6 +241,7 @@
       const estimasi = parseInt(document.getElementById('inputEstimasiHarga').value) || 0;
 
       if (nama) {
+        if (!appState.belanja) appState.belanja = [];
         appState.belanja.push({
           id: Date.now(),
           nama: nama,
@@ -251,7 +253,7 @@
         document.getElementById('inputNamaBelanja').value = '';
         document.getElementById('inputQtyBelanja').value = '1';
         document.getElementById('inputEstimasiHarga').value = '';
-        saveData();
+        pushData();
       }
     });
 
@@ -260,24 +262,25 @@
       const nama = document.getElementById('inputNamaBawaan').value.trim();
 
       if (nama) {
+        if (!appState.bawaan) appState.bawaan = [];
         appState.bawaan.push({
           id: Date.now(),
           nama: nama,
           packed: false
         });
         document.getElementById('inputNamaBawaan').value = '';
-        saveData();
+        pushData();
       }
     });
 
     document.getElementById('btnResetData').addEventListener('click', () => {
-      if (confirm('Reset seluruh data belanjaan dan peralatan?')) {
+      if (confirm('Reset seluruh data belanjaan dan peralatan untuk semua orang?')) {
         appState = {
           people: 4,
-          belanja: defaultBelanja,
-          bawaan: defaultBawaan
+          belanja: [],
+          bawaan: []
         };
-        saveData();
+        pushData();
       }
     });
 
@@ -288,7 +291,7 @@
         if (item.bought && (!item.aktual || item.aktual === 0)) {
           item.aktual = item.estimasi;
         }
-        saveData();
+        pushData();
       }
     };
 
@@ -296,7 +299,7 @@
       const item = appState.belanja.find(i => i.id === id);
       if (item) {
         item.qty = parseInt(val) || 1;
-        saveData();
+        pushData();
       }
     };
 
@@ -304,7 +307,7 @@
       const item = appState.belanja.find(i => i.id === id);
       if (item) {
         item.estimasi = parseInt(val) || 0;
-        saveData();
+        pushData();
       }
     };
 
@@ -312,41 +315,40 @@
       const item = appState.belanja.find(i => i.id === id);
       if (item) {
         item.aktual = parseInt(val) || 0;
-        saveData();
+        pushData();
       }
     };
 
     window.deleteBelanja = function(id) {
       appState.belanja = appState.belanja.filter(i => i.id !== id);
-      saveData();
+      pushData();
     };
 
     window.togglePacked = function(id) {
       const item = appState.bawaan.find(i => i.id === id);
       if (item) {
         item.packed = !item.packed;
-        saveData();
+        pushData();
       }
     };
 
     window.deleteBawaan = function(id) {
       appState.bawaan = appState.bawaan.filter(i => i.id !== id);
-      saveData();
+      pushData();
     };
 
     function render() {
-      const totalEstimasi = appState.belanja.reduce((sum, i) => sum + ((i.estimasi || 0) * (i.qty || 1)), 0);
-      const totalAktual = appState.belanja
+      const belanjaList = appState.belanja || [];
+      const bawaanList = appState.bawaan || [];
+
+      const totalEstimasi = belanjaList.reduce((sum, i) => sum + ((i.estimasi || 0) * (i.qty || 1)), 0);
+      const totalAktual = belanjaList
         .filter(i => i.bought)
         .reduce((sum, i) => sum + ((i.aktual || 0) * (i.qty || 1)), 0);
       
       const people = appState.people || 1;
       const perPerson = Math.ceil(totalEstimasi / people);
-      
-      // Total Kas Terkumpul (Per Person x Jumlah Orang)
       const totalKasTerkumpul = perPerson * people;
-      
-      // Sisa Uang Kas (Total Kas dikurangi Realisasi Belanja)
       const sisaUang = totalKasTerkumpul - totalAktual;
 
       peopleInput.value = people;
@@ -362,14 +364,14 @@
         sisaUangText.className = "text-base font-extrabold text-emerald-400";
       }
 
-      countBelanja.textContent = `${appState.belanja.length} Item`;
-      countBawaan.textContent = `${appState.bawaan.length} Item`;
+      countBelanja.textContent = `${belanjaList.length} Item`;
+      countBawaan.textContent = `${bawaanList.length} Item`;
 
       listBelanja.innerHTML = '';
-      if (appState.belanja.length === 0) {
+      if (belanjaList.length === 0) {
         listBelanja.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">Belum ada daftar belanjaan.</p>`;
       } else {
-        appState.belanja.forEach(item => {
+        belanjaList.forEach(item => {
           const itemEl = document.createElement('div');
           itemEl.className = `p-3.5 rounded-2xl border transition-all duration-200 flex flex-col gap-2.5 ${
             item.bought 
@@ -424,10 +426,10 @@
       }
 
       listBawaan.innerHTML = '';
-      if (appState.bawaan.length === 0) {
+      if (bawaanList.length === 0) {
         listBawaan.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">Belum ada daftar peralatan bawaan.</p>`;
       } else {
-        appState.bawaan.forEach(item => {
+        bawaanList.forEach(item => {
           const itemEl = document.createElement('div');
           itemEl.className = `p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-2 ${
             item.packed 
@@ -450,9 +452,6 @@
 
       lucide.createIcons();
     }
-
-    loadData();
-    render();
   </script>
 </body>
 </html>
