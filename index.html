@@ -22,21 +22,27 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen pb-24 selection:bg-orange-500 selection:text-white">
 
-  <div id="pinScreen" class="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center">
-    <div class="p-4 bg-orange-500/10 rounded-3xl border border-orange-500/20 mb-4 text-orange-400">
-      <i data-lucide="lock" class="w-10 h-10"></i>
-    </div>
-    <h2 class="text-xl font-bold text-white mb-1">Aplikasi Terkunci</h2>
-    <p class="text-xs text-slate-400 mb-6">Masukkan PIN keamanan untuk mengakses BBQ Planner</p>
-    
-    <div class="w-full max-w-xs space-y-4">
-      <input type="password" id="inputPin" maxlength="6" pattern="\d*" inputmode="numeric" placeholder="Masukkan PIN" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3.5 text-center text-xl font-extrabold tracking-widest text-orange-400 placeholder-slate-600 focus:outline-none focus:border-orange-500 transition-all">
+  <div id="pinModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
+      <div class="w-12 h-12 bg-red-500/10 text-red-400 rounded-2xl flex items-center justify-center mx-auto">
+        <i data-lucide="shield-alert" class="w-6 h-6"></i>
+      </div>
+      <div>
+        <h3 class="text-base font-bold text-white">Konfirmasi Reset Data</h3>
+        <p class="text-xs text-slate-400 mt-1">Masukkan PIN untuk menghapus semua data</p>
+      </div>
       
-      <p id="pinError" class="text-xs text-red-400 font-semibold hidden">PIN Salah! Coba lagi.</p>
-      
-      <button id="btnUnlock" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm py-3.5 rounded-2xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all">
-        Buka Aplikasi
-      </button>
+      <input type="password" id="inputResetPin" maxlength="6" pattern="\d*" inputmode="numeric" placeholder="Masukkan PIN" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-3 text-center text-lg font-extrabold text-orange-400 placeholder-slate-600 focus:outline-none focus:border-orange-500">
+      <p id="pinResetError" class="text-xs text-red-400 font-semibold hidden">PIN Salah!</p>
+
+      <div class="flex gap-2">
+        <button id="btnCancelReset" class="flex-1 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-3 rounded-xl transition-all">
+          Batal
+        </button>
+        <button id="btnConfirmReset" class="flex-1 bg-red-600 hover:bg-red-500 text-white font-bold text-xs py-3 rounded-xl transition-all">
+          Reset Data
+        </button>
+      </div>
     </div>
   </div>
 
@@ -175,28 +181,42 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // PIN KEAMANAN
-    const CORRECT_PIN = "224488";
+    // PIN KHUSUS RESET DATA
+    const RESET_PIN = "224488";
 
-    // Logika PIN Screen
-    const pinScreen = document.getElementById('pinScreen');
-    const inputPin = document.getElementById('inputPin');
-    const btnUnlock = document.getElementById('btnUnlock');
-    const pinError = document.getElementById('pinError');
+    const pinModal = document.getElementById('pinModal');
+    const inputResetPin = document.getElementById('inputResetPin');
+    const pinResetError = document.getElementById('pinResetError');
+    const btnResetData = document.getElementById('btnResetData');
+    const btnCancelReset = document.getElementById('btnCancelReset');
+    const btnConfirmReset = document.getElementById('btnConfirmReset');
 
-    function checkPin() {
-      if (inputPin.value === CORRECT_PIN) {
-        pinScreen.classList.add('hidden');
+    btnResetData.addEventListener('click', () => {
+      inputResetPin.value = '';
+      pinResetError.classList.add('hidden');
+      pinModal.classList.remove('hidden');
+      inputResetPin.focus();
+    });
+
+    btnCancelReset.addEventListener('click', () => {
+      pinModal.classList.add('hidden');
+    });
+
+    btnConfirmReset.addEventListener('click', () => {
+      if (inputResetPin.value === RESET_PIN) {
+        pinModal.classList.add('hidden');
+        appState = {
+          people: 4,
+          realPerPerson: 0,
+          belanja: [],
+          bawaan: []
+        };
+        pushData();
       } else {
-        pinError.classList.remove('hidden');
-        inputPin.value = '';
-        inputPin.focus();
+        pinResetError.classList.remove('hidden');
+        inputResetPin.value = '';
+        inputResetPin.focus();
       }
-    }
-
-    btnUnlock.addEventListener('click', checkPin);
-    inputPin.addEventListener('keyup', (e) => {
-      if (e.key === 'Enter') checkPin();
     });
 
     const firebaseConfig = {
@@ -220,7 +240,6 @@
       bawaan: []
     };
 
-    // Populate Options 1 - 50 Pcs
     const inputQtyBelanja = document.getElementById('inputQtyBelanja');
     for (let i = 1; i <= 50; i++) {
       const opt = document.createElement('option');
@@ -335,18 +354,6 @@
       }
     });
 
-    document.getElementById('btnResetData').addEventListener('click', () => {
-      if (confirm('Reset seluruh data belanjaan dan peralatan untuk semua orang?')) {
-        appState = {
-          people: 4,
-          realPerPerson: 0,
-          belanja: [],
-          bawaan: []
-        };
-        pushData();
-      }
-    });
-
     window.toggleBought = function(id) {
       const item = appState.belanja.find(i => i.id === id);
       if (item) {
@@ -354,6 +361,14 @@
         if (item.bought && (!item.aktual || item.aktual === 0)) {
           item.aktual = item.estimasi;
         }
+        pushData();
+      }
+    };
+
+    window.updateNamaBelanja = function(id, val) {
+      const item = appState.belanja.find(i => i.id === id);
+      if (item && val.trim() !== '') {
+        item.nama = val.trim();
         pushData();
       }
     };
@@ -391,6 +406,14 @@
       const item = appState.bawaan.find(i => i.id === id);
       if (item) {
         item.packed = !item.packed;
+        pushData();
+      }
+    };
+
+    window.updateNamaBawaan = function(id, val) {
+      const item = appState.bawaan.find(i => i.id === id);
+      if (item && val.trim() !== '') {
+        item.nama = val.trim();
         pushData();
       }
     };
@@ -455,11 +478,11 @@
 
           itemEl.innerHTML = `
             <div class="flex items-center justify-between gap-2">
-              <label class="flex items-center gap-3 cursor-pointer select-none flex-1 min-w-0">
-                <input type="checkbox" ${item.bought ? 'checked' : ''} onchange="toggleBought(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-orange-500 focus:ring-0 focus:ring-offset-0 bg-slate-900 cursor-pointer">
-                <span class="text-xs font-semibold ${item.bought ? 'line-through text-slate-400' : 'text-slate-100'} truncate">${item.nama}</span>
-              </label>
-              <button onclick="deleteBelanja(${item.id})" class="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors">
+              <div class="flex items-center gap-2.5 flex-1 min-w-0">
+                <input type="checkbox" ${item.bought ? 'checked' : ''} onchange="toggleBought(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-orange-500 focus:ring-0 focus:ring-offset-0 bg-slate-900 cursor-pointer shrink-0">
+                <input type="text" value="${item.nama}" onchange="updateNamaBelanja(${item.id}, this.value)" class="bg-transparent text-xs font-semibold ${item.bought ? 'line-through text-slate-400' : 'text-slate-100'} w-full focus:outline-none focus:bg-slate-900/80 focus:px-2 focus:py-1 focus:rounded-lg focus:ring-1 focus:ring-orange-500 transition-all truncate">
+              </div>
+              <button onclick="deleteBelanja(${item.id})" class="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors shrink-0">
                 <i data-lucide="trash-2" class="w-4 h-4"></i>
               </button>
             </div>
@@ -512,11 +535,11 @@
           }`;
 
           itemEl.innerHTML = `
-            <label class="flex items-center gap-3 cursor-pointer select-none flex-1 min-w-0">
-              <input type="checkbox" ${item.packed ? 'checked' : ''} onchange="togglePacked(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-amber-500 focus:ring-0 focus:ring-offset-0 bg-slate-900 cursor-pointer">
-              <span class="text-xs font-semibold ${item.packed ? 'line-through text-slate-400' : 'text-slate-100'} truncate">${item.nama}</span>
-            </label>
-            <button onclick="deleteBawaan(${item.id})" class="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors">
+            <div class="flex items-center gap-2.5 flex-1 min-w-0">
+              <input type="checkbox" ${item.packed ? 'checked' : ''} onchange="togglePacked(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-amber-500 focus:ring-0 focus:ring-offset-0 bg-slate-900 cursor-pointer shrink-0">
+              <input type="text" value="${item.nama}" onchange="updateNamaBawaan(${item.id}, this.value)" class="bg-transparent text-xs font-semibold ${item.packed ? 'line-through text-slate-400' : 'text-slate-100'} w-full focus:outline-none focus:bg-slate-900/80 focus:px-2 focus:py-1 focus:rounded-lg focus:ring-1 focus:ring-amber-500 transition-all truncate">
+            </div>
+            <button onclick="deleteBawaan(${item.id})" class="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors shrink-0">
               <i data-lucide="trash-2" class="w-4 h-4"></i>
             </button>
           `;
