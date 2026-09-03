@@ -22,6 +22,24 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen pb-24 selection:bg-orange-500 selection:text-white">
 
+  <div id="pinScreen" class="fixed inset-0 z-50 bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 text-center">
+    <div class="p-4 bg-orange-500/10 rounded-3xl border border-orange-500/20 mb-4 text-orange-400">
+      <i data-lucide="lock" class="w-10 h-10"></i>
+    </div>
+    <h2 class="text-xl font-bold text-white mb-1">Aplikasi Terkunci</h2>
+    <p class="text-xs text-slate-400 mb-6">Masukkan PIN keamanan untuk mengakses BBQ Planner</p>
+    
+    <div class="w-full max-w-xs space-y-4">
+      <input type="password" id="inputPin" maxlength="6" pattern="\d*" inputmode="numeric" placeholder="Masukkan PIN" class="w-full bg-slate-800 border border-slate-700 rounded-2xl px-4 py-3.5 text-center text-xl font-extrabold tracking-widest text-orange-400 placeholder-slate-600 focus:outline-none focus:border-orange-500 transition-all">
+      
+      <p id="pinError" class="text-xs text-red-400 font-semibold hidden">PIN Salah! Coba lagi.</p>
+      
+      <button id="btnUnlock" class="w-full bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold text-sm py-3.5 rounded-2xl shadow-lg shadow-orange-500/20 active:scale-95 transition-all">
+        Buka Aplikasi
+      </button>
+    </div>
+  </div>
+
   <div class="max-w-md mx-auto min-h-screen flex flex-col justify-between relative shadow-2xl bg-slate-900 border-x border-slate-800/80">
     
     <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-5 py-4 flex items-center justify-between">
@@ -113,7 +131,7 @@
             <div class="w-28">
               <label class="text-[10px] text-slate-400 block mb-1 font-medium">Jumlah (Pcs)</label>
               <select id="inputQtyBelanja" class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs font-bold text-center text-orange-400 focus:outline-none focus:border-orange-500 appearance-none cursor-pointer">
-                </select>
+              </select>
             </div>
             <div class="flex-1">
               <label class="text-[10px] text-slate-400 block mb-1 font-medium">Est. Harga Satuan (Rp)</label>
@@ -157,6 +175,30 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
+    // PIN KEAMANAN
+    const CORRECT_PIN = "224488";
+
+    // Logika PIN Screen
+    const pinScreen = document.getElementById('pinScreen');
+    const inputPin = document.getElementById('inputPin');
+    const btnUnlock = document.getElementById('btnUnlock');
+    const pinError = document.getElementById('pinError');
+
+    function checkPin() {
+      if (inputPin.value === CORRECT_PIN) {
+        pinScreen.classList.add('hidden');
+      } else {
+        pinError.classList.remove('hidden');
+        inputPin.value = '';
+        inputPin.focus();
+      }
+    }
+
+    btnUnlock.addEventListener('click', checkPin);
+    inputPin.addEventListener('keyup', (e) => {
+      if (e.key === 'Enter') checkPin();
+    });
+
     const firebaseConfig = {
       apiKey: "AIzaSyAWQjX4-dUtDOHzVCgDZqlXSzzEjCk4tAs",
       authDomain: "bbq-planner-a6b2a.firebaseapp.com",
@@ -178,7 +220,7 @@
       bawaan: []
     };
 
-    // Populate Options untuk Wheel Picker 1 - 50 Pcs
+    // Populate Options 1 - 50 Pcs
     const inputQtyBelanja = document.getElementById('inputQtyBelanja');
     for (let i = 1; i <= 50; i++) {
       const opt = document.createElement('option');
@@ -406,7 +448,6 @@
 
           const subtotalAktual = (item.aktual || 0) * (item.qty || 1);
 
-          // Build Options untuk Item List Roll
           let optionsHtml = '';
           for (let n = 1; n <= 50; n++) {
             optionsHtml += `<option value="${n}" ${item.qty === n ? 'selected' : ''}>${n} Pcs</option>`;
