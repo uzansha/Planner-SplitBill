@@ -3,12 +3,15 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BBQ & Camp Planner</title>
+  <title>BBQ & Camp Planner + Split Bill</title>
 
+  <!-- Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
   
+  <!-- Lucide Icons CDN -->
   <script src="https://unpkg.com/lucide@latest"></script>
 
+  <!-- Google Fonts: Plus Jakarta Sans -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -22,14 +25,15 @@
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen pb-24 selection:bg-orange-500 selection:text-white">
 
+  <!-- MODAL PIN RESET (KHUSUS MODE PLANNER) -->
   <div id="pinModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 w-full max-w-xs text-center space-y-4 shadow-2xl">
       <div class="w-12 h-12 bg-red-500/10 text-red-400 rounded-2xl flex items-center justify-center mx-auto">
         <i data-lucide="shield-alert" class="w-6 h-6"></i>
       </div>
       <div>
-        <h3 class="text-base font-bold text-white">Konfirmasi Reset Data</h3>
-        <p class="text-xs text-slate-400 mt-1">Masukkan PIN untuk menghapus semua data</p>
+        <h3 class="text-base font-bold text-white">Konfirmasi Reset Planner</h3>
+        <p class="text-xs text-slate-400 mt-1">Masukkan PIN untuk menghapus semua data planner</p>
       </div>
       
       <input type="password" id="inputResetPin" maxlength="6" pattern="\d*" inputmode="numeric" placeholder="Masukkan PIN" class="w-full bg-slate-950 border border-slate-700 rounded-2xl px-3 py-3 text-center text-lg font-extrabold text-orange-400 placeholder-slate-600 focus:outline-none focus:border-orange-500">
@@ -46,28 +50,80 @@
     </div>
   </div>
 
+  <!-- MODAL POP-UP TAMBAH ITEM SPLIT BILL -->
+  <div id="addItemModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-xs space-y-4 shadow-2xl">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-3">
+        <h3 class="text-sm font-bold text-white flex items-center gap-1.5">
+          <i data-lucide="plus-circle" class="w-4 h-4 text-blue-400"></i> Tambah Item Belanja
+        </h3>
+        <button id="btnCloseItemModal" class="text-slate-400 hover:text-slate-200">
+          <i data-lucide="x" class="w-5 h-5"></i>
+        </button>
+      </div>
+
+      <form id="formModalAddSplitItem" class="space-y-3">
+        <div>
+          <label class="text-[10px] text-slate-400 block mb-1 font-medium">Nama Item / Makanan</label>
+          <input type="text" id="modalInputNama" placeholder="Misal: Ayam Bakar..." required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+        </div>
+
+        <div class="flex gap-2">
+          <div class="w-24">
+            <label class="text-[10px] text-slate-400 block mb-1 font-medium">Jumlah (Pcs)</label>
+            <input type="number" id="modalInputQty" value="1" min="1" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-center text-blue-400 focus:outline-none focus:border-blue-500">
+          </div>
+          <div class="flex-1">
+            <label class="text-[10px] text-slate-400 block mb-1 font-medium">Harga Satuan (Rp)</label>
+            <input type="number" id="modalInputHarga" placeholder="0" required class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+
+        <button type="submit" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs py-3 rounded-xl shadow-lg shadow-blue-500/20 active:scale-95 transition-all">
+          Simpan Item
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Main Container -->
   <div class="max-w-md mx-auto min-h-screen flex flex-col justify-between relative shadow-2xl bg-slate-900 border-x border-slate-800/80">
     
-    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-5 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <div class="p-2.5 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-2xl shadow-lg shadow-orange-500/20 text-white">
-          <i data-lucide="flame" class="w-6 h-6"></i>
+    <!-- Top Bar / Header dengan Mode Switcher -->
+    <header class="sticky top-0 z-30 bg-slate-900/90 backdrop-blur-md border-b border-slate-800/80 px-4 py-3.5 flex items-center justify-between gap-2">
+      <div class="flex items-center gap-2.5">
+        <div id="appHeaderIcon" class="p-2 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-2xl shadow-lg text-white">
+          <i data-lucide="flame" class="w-5 h-5"></i>
         </div>
         <div>
-          <h1 class="font-bold text-lg leading-tight text-white">BBQ & Camp</h1>
-          <p class="text-xs font-medium text-slate-400 flex items-center gap-1">
-            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span> Sync Online
+          <h1 id="appHeaderTitle" class="font-bold text-base leading-tight text-white">BBQ Planner</h1>
+          <p class="text-[10px] font-medium text-slate-400 flex items-center gap-1">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span> Sync Online
           </p>
         </div>
       </div>
 
-      <button id="btnResetData" class="p-2.5 text-slate-400 hover:text-red-400 hover:bg-slate-800/80 rounded-xl transition-all duration-200" title="Reset Semua Data">
-        <i data-lucide="rotate-ccw" class="w-5 h-5"></i>
-      </button>
+      <!-- Mode Switcher Pill (Planner vs Split Bill) -->
+      <div class="flex items-center gap-2">
+        <div class="flex bg-slate-950 border border-slate-800 rounded-full p-1 shadow-inner">
+          <button id="btnSwitchPlanner" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all bg-orange-500 text-white shadow-md">
+            Planner
+          </button>
+          <button id="btnSwitchSplit" class="px-3 py-1.5 rounded-full text-[10px] font-bold transition-all text-slate-400 hover:text-slate-200">
+            Split Bill
+          </button>
+        </div>
+
+        <button id="btnResetData" class="p-2 text-slate-400 hover:text-red-400 hover:bg-slate-800/80 rounded-xl transition-all" title="Reset Data">
+          <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+        </button>
+      </div>
     </header>
 
-    <main class="flex-1 px-4 py-5 space-y-6">
+    <!-- CONTAINER 1: MODE PLANNER -->
+    <main id="modePlannerContainer" class="flex-1 px-4 py-5 space-y-6">
 
+      <!-- Financial Split Card -->
       <section class="bg-gradient-to-br from-slate-800/90 via-slate-800/60 to-slate-900/80 border border-slate-700/60 rounded-3xl p-5 shadow-xl backdrop-blur-sm">
         <div class="flex items-center justify-between border-b border-slate-700/60 pb-3 mb-4">
           <span class="text-xs font-bold uppercase tracking-wider text-orange-400 flex items-center gap-1.5">
@@ -120,6 +176,7 @@
         </div>
       </section>
 
+      <!-- Section Tabs Navigation -->
       <nav class="flex bg-slate-800/80 p-1.5 rounded-2xl border border-slate-700/50">
         <button id="tabBelanja" class="flex-1 py-2.5 rounded-xl font-semibold text-xs transition-all duration-200 flex items-center justify-center gap-2 bg-orange-500 text-white shadow-md">
           <i data-lucide="shopping-bag" class="w-4 h-4"></i> Barang Belanjaan
@@ -129,6 +186,7 @@
         </button>
       </nav>
 
+      <!-- TAB CONTENT: BARANG BELANJAAN -->
       <section id="contentBelanja" class="space-y-4">
         <form id="formBelanja" class="bg-slate-800/40 border border-slate-800 p-3.5 rounded-2xl space-y-3">
           <input type="text" id="inputNamaBelanja" placeholder="Nama bahan / belanjaan..." required class="w-full bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-orange-500 transition-colors">
@@ -158,6 +216,7 @@
         <div id="listBelanja" class="space-y-2.5"></div>
       </section>
 
+      <!-- TAB CONTENT: PERALATAN BAWAAN -->
       <section id="contentBawaan" class="space-y-4 hidden">
         <form id="formBawaan" class="bg-slate-800/40 border border-slate-800 p-3.5 rounded-2xl flex gap-2">
           <input type="text" id="inputNamaBawaan" placeholder="Nama alat (Panggangan, Tikar)..." required class="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors">
@@ -173,51 +232,84 @@
 
         <div id="listBawaan" class="space-y-2.5"></div>
       </section>
+    </main>
+
+
+    <!-- CONTAINER 2: MODE SPLIT BILL -->
+    <main id="modeSplitContainer" class="flex-1 px-4 py-5 space-y-6 hidden">
+
+      <!-- 1. Tambah Anggota Rombongan -->
+      <section class="bg-slate-800/40 border border-slate-800 p-4 rounded-3xl space-y-3">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <i data-lucide="users" class="w-4 h-4"></i> Anggota Split Bill
+        </p>
+
+        <form id="formAddPerson" class="flex gap-2">
+          <input type="text" id="inputPersonName" placeholder="Nama orang (misal: Budi)..." required class="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-blue-500">
+          <button type="submit" class="bg-blue-600 hover:bg-blue-500 text-white font-bold text-xs px-4 py-2 rounded-xl flex items-center gap-1 transition-all">
+            <i data-lucide="plus" class="w-3.5 h-3.5"></i> Tambah
+          </button>
+        </form>
+
+        <div id="listPeopleTags" class="flex flex-wrap gap-1.5 pt-1"></div>
+      </section>
+
+      <!-- 2. Daftar Barang Struk & Peta Pemilik -->
+      <section class="space-y-3">
+        <div class="flex items-center justify-between">
+          <p class="text-xs font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+            <i data-lucide="receipt" class="w-4 h-4"></i> Barang & Pemilik
+          </p>
+          <button id="btnOpenAddModal" class="bg-blue-600/20 hover:bg-blue-600/30 text-blue-400 border border-blue-500/30 font-semibold text-xs px-3 py-1.5 rounded-xl flex items-center gap-1.5 transition-all">
+            <i data-lucide="plus-circle" class="w-4 h-4"></i> Tambah Item
+          </button>
+        </div>
+
+        <div id="listSplitItems" class="space-y-3"></div>
+      </section>
+
+      <!-- 3. Nominal Biaya Tambahan -->
+      <section class="bg-slate-800/40 border border-slate-800 p-4 rounded-3xl space-y-3">
+        <p class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+          <i data-lucide="calculator" class="w-4 h-4"></i> Biaya Tambahan (Nominal Rp)
+        </p>
+
+        <div class="grid grid-cols-3 gap-2 text-xs">
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Pajak (Rp)</label>
+            <input type="number" id="inputTax" placeholder="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Service (Rp)</label>
+            <input type="number" id="inputService" placeholder="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-blue-500">
+          </div>
+          <div>
+            <label class="text-[10px] text-slate-400 block mb-1">Diskon (-Rp)</label>
+            <input type="number" id="inputDiscount" placeholder="0" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-1.5 text-xs text-red-400 focus:outline-none focus:border-blue-500">
+          </div>
+        </div>
+      </section>
+
+      <!-- 4. Hasil Tagihan Per Orang -->
+      <section class="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-3xl p-5 space-y-3 shadow-xl">
+        <p class="text-xs font-bold uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
+          <i data-lucide="badge-dollar-sign" class="w-4 h-4"></i> Rincian Tagihan Per Orang
+        </p>
+
+        <div id="listBillResult" class="space-y-2"></div>
+      </section>
 
     </main>
+
   </div>
 
+  <!-- Firebase Scripts -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, onValue, set } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-    // PIN KHUSUS RESET DATA
     const RESET_PIN = "224488";
-
-    const pinModal = document.getElementById('pinModal');
-    const inputResetPin = document.getElementById('inputResetPin');
-    const pinResetError = document.getElementById('pinResetError');
-    const btnResetData = document.getElementById('btnResetData');
-    const btnCancelReset = document.getElementById('btnCancelReset');
-    const btnConfirmReset = document.getElementById('btnConfirmReset');
-
-    btnResetData.addEventListener('click', () => {
-      inputResetPin.value = '';
-      pinResetError.classList.add('hidden');
-      pinModal.classList.remove('hidden');
-      inputResetPin.focus();
-    });
-
-    btnCancelReset.addEventListener('click', () => {
-      pinModal.classList.add('hidden');
-    });
-
-    btnConfirmReset.addEventListener('click', () => {
-      if (inputResetPin.value === RESET_PIN) {
-        pinModal.classList.add('hidden');
-        appState = {
-          people: 4,
-          realPerPerson: 0,
-          belanja: [],
-          bawaan: []
-        };
-        pushData();
-      } else {
-        pinResetError.classList.remove('hidden');
-        inputResetPin.value = '';
-        inputResetPin.focus();
-      }
-    });
+    let currentMode = 'planner';
 
     const firebaseConfig = {
       apiKey: "AIzaSyAWQjX4-dUtDOHzVCgDZqlXSzzEjCk4tAs",
@@ -231,64 +323,30 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
-    const dbRef = ref(db, 'bbq_data');
+    
+    const plannerRef = ref(db, 'bbq_data');
+    const splitRef = ref(db, 'bbq_splitbill_data');
 
-    let appState = {
+    let plannerState = {
       people: 4,
       realPerPerson: 0,
       belanja: [],
       bawaan: []
     };
 
-    const inputQtyBelanja = document.getElementById('inputQtyBelanja');
-    for (let i = 1; i <= 50; i++) {
-      const opt = document.createElement('option');
-      opt.value = i;
-      opt.textContent = `${i} Pcs`;
-      inputQtyBelanja.appendChild(opt);
-    }
+    let splitState = {
+      people: [],
+      items: [],
+      tax: 0,
+      service: 0,
+      discount: 0
+    };
 
-    onValue(dbRef, (snapshot) => {
-      const data = snapshot.val();
-      if (data) {
-        appState = {
-          people: data.people || 1,
-          realPerPerson: data.realPerPerson || 0,
-          belanja: data.belanja || [],
-          bawaan: data.bawaan || []
-        };
-      }
-      render();
-    });
-
-    function pushData() {
-      set(dbRef, appState);
-    }
-
-    function formatRp(value) {
-      return 'Rp ' + (value || 0).toLocaleString('id-ID');
-    }
-
-    const peopleInput = document.getElementById('peopleCount');
-    const realPerPersonInput = document.getElementById('realPerPersonInput');
-    const totalEstimasiText = document.getElementById('totalEstimasiText');
-    const totalAktualText = document.getElementById('totalAktualText');
-    const perPersonEstText = document.getElementById('perPersonEstText');
-    const totalKasTerkumpulText = document.getElementById('totalKasTerkumpulText');
-    const sisaUangText = document.getElementById('sisaUangText');
-    
+    // TAB PLANNER NAV LOGIC
     const tabBelanja = document.getElementById('tabBelanja');
     const tabBawaan = document.getElementById('tabBawaan');
     const contentBelanja = document.getElementById('contentBelanja');
     const contentBawaan = document.getElementById('contentBawaan');
-
-    const formBelanja = document.getElementById('formBelanja');
-    const formBawaan = document.getElementById('formBawaan');
-    const listBelanja = document.getElementById('listBelanja');
-    const listBawaan = document.getElementById('listBawaan');
-
-    const countBelanja = document.getElementById('countBelanja');
-    const countBawaan = document.getElementById('countBawaan');
 
     tabBelanja.addEventListener('click', () => {
       tabBelanja.className = "flex-1 py-2.5 rounded-xl font-semibold text-xs transition-all duration-200 flex items-center justify-center gap-2 bg-orange-500 text-white shadow-md";
@@ -304,246 +362,398 @@
       contentBelanja.classList.add('hidden');
     });
 
-    peopleInput.addEventListener('change', (e) => {
-      const val = parseInt(e.target.value);
-      appState.people = val > 0 ? val : 1;
-      pushData();
+    const inputQtyBelanja = document.getElementById('inputQtyBelanja');
+    for (let i = 1; i <= 50; i++) {
+      const opt = document.createElement('option');
+      opt.value = i;
+      opt.textContent = `${i} Pcs`;
+      inputQtyBelanja.appendChild(opt);
+    }
+
+    const btnSwitchPlanner = document.getElementById('btnSwitchPlanner');
+    const btnSwitchSplit = document.getElementById('btnSwitchSplit');
+    const modePlannerContainer = document.getElementById('modePlannerContainer');
+    const modeSplitContainer = document.getElementById('modeSplitContainer');
+    const appHeaderIcon = document.getElementById('appHeaderIcon');
+    const appHeaderTitle = document.getElementById('appHeaderTitle');
+
+    btnSwitchPlanner.addEventListener('click', () => {
+      currentMode = 'planner';
+      btnSwitchPlanner.className = "px-3 py-1.5 rounded-full text-[10px] font-bold transition-all bg-orange-500 text-white shadow-md";
+      btnSwitchSplit.className = "px-3 py-1.5 rounded-full text-[10px] font-bold transition-all text-slate-400 hover:text-slate-200";
+      modePlannerContainer.classList.remove('hidden');
+      modeSplitContainer.classList.add('hidden');
+      appHeaderTitle.textContent = "BBQ Planner";
+      appHeaderIcon.className = "p-2 bg-gradient-to-tr from-orange-600 to-amber-500 rounded-2xl shadow-lg text-white";
     });
 
-    realPerPersonInput.addEventListener('change', (e) => {
-      appState.realPerPerson = parseInt(e.target.value) || 0;
-      pushData();
+    btnSwitchSplit.addEventListener('click', () => {
+      currentMode = 'split';
+      btnSwitchSplit.className = "px-3 py-1.5 rounded-full text-[10px] font-bold transition-all bg-blue-600 text-white shadow-md";
+      btnSwitchPlanner.className = "px-3 py-1.5 rounded-full text-[10px] font-bold transition-all text-slate-400 hover:text-slate-200";
+      modeSplitContainer.classList.remove('hidden');
+      modePlannerContainer.classList.add('hidden');
+      appHeaderTitle.textContent = "Split Bill Mode";
+      appHeaderIcon.className = "p-2 bg-gradient-to-tr from-blue-600 to-indigo-500 rounded-2xl shadow-lg text-white";
     });
 
-    formBelanja.addEventListener('submit', (e) => {
+    onValue(plannerRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) plannerState = data;
+      renderPlanner();
+    });
+
+    onValue(splitRef, (snapshot) => {
+      const data = snapshot.val();
+      if (data) {
+        splitState = {
+          people: data.people || [],
+          items: data.items || [],
+          tax: data.tax || 0,
+          service: data.service || 0,
+          discount: data.discount || 0
+        };
+      }
+      renderSplit();
+    });
+
+    function pushPlanner() { set(plannerRef, plannerState); }
+    function pushSplit() { set(splitRef, splitState); }
+    function formatRp(v) { return 'Rp ' + (v || 0).toLocaleString('id-ID'); }
+
+    // RESET LOGIC
+    const pinModal = document.getElementById('pinModal');
+    const inputResetPin = document.getElementById('inputResetPin');
+    const pinResetError = document.getElementById('pinResetError');
+    const btnResetData = document.getElementById('btnResetData');
+
+    btnResetData.addEventListener('click', () => {
+      if (currentMode === 'planner') {
+        inputResetPin.value = '';
+        pinResetError.classList.add('hidden');
+        pinModal.classList.remove('hidden');
+      } else {
+        if (confirm('Reset seluruh data Split Bill?')) {
+          splitState = { people: [], items: [], tax: 0, service: 0, discount: 0 };
+          pushSplit();
+        }
+      }
+    });
+
+    document.getElementById('btnCancelReset').addEventListener('click', () => pinModal.classList.add('hidden'));
+    document.getElementById('btnConfirmReset').addEventListener('click', () => {
+      if (inputResetPin.value === RESET_PIN) {
+        pinModal.classList.add('hidden');
+        plannerState = { people: 4, realPerPerson: 0, belanja: [], bawaan: [] };
+        pushPlanner();
+      } else {
+        pinResetError.classList.remove('hidden');
+      }
+    });
+
+    // PLANNER HANDLERS
+    const peopleInput = document.getElementById('peopleCount');
+    const realPerPersonInput = document.getElementById('realPerPersonInput');
+    peopleInput.addEventListener('change', (e) => { plannerState.people = parseInt(e.target.value) || 1; pushPlanner(); });
+    realPerPersonInput.addEventListener('change', (e) => { plannerState.realPerPerson = parseInt(e.target.value) || 0; pushPlanner(); });
+
+    document.getElementById('formBelanja').addEventListener('submit', (e) => {
       e.preventDefault();
       const nama = document.getElementById('inputNamaBelanja').value.trim();
       const qty = parseInt(inputQtyBelanja.value) || 1;
       const estimasi = parseInt(document.getElementById('inputEstimasiHarga').value) || 0;
+      if (nama) {
+        if (!plannerState.belanja) plannerState.belanja = [];
+        plannerState.belanja.push({ id: Date.now(), nama, qty, estimasi, aktual: 0, bought: false });
+        document.getElementById('inputNamaBelanja').value = '';
+        document.getElementById('inputEstimasiHarga').value = '';
+        pushPlanner();
+      }
+    });
+
+    document.getElementById('formBawaan').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nama = document.getElementById('inputNamaBawaan').value.trim();
+      if (nama) {
+        if (!plannerState.bawaan) plannerState.bawaan = [];
+        plannerState.bawaan.push({ id: Date.now(), nama, packed: false });
+        document.getElementById('inputNamaBawaan').value = '';
+        pushPlanner();
+      }
+    });
+
+    window.toggleBought = (id) => {
+      const it = plannerState.belanja.find(i => i.id === id);
+      if (it) { it.bought = !it.bought; if(it.bought && !it.aktual) it.aktual = it.estimasi; pushPlanner(); }
+    };
+    window.updateNamaBelanja = (id, v) => { const it = plannerState.belanja.find(i => i.id === id); if(it) { it.nama = v; pushPlanner(); } };
+    window.updateItemQty = (id, v) => { const it = plannerState.belanja.find(i => i.id === id); if(it) { it.qty = parseInt(v)||1; pushPlanner(); } };
+    window.updateEstimasi = (id, v) => { const it = plannerState.belanja.find(i => i.id === id); if(it) { it.estimasi = parseInt(v)||0; pushPlanner(); } };
+    window.updateAktual = (id, v) => { const it = plannerState.belanja.find(i => i.id === id); if(it) { it.aktual = parseInt(v)||0; pushPlanner(); } };
+    window.deleteBelanja = (id) => { plannerState.belanja = plannerState.belanja.filter(i => i.id !== id); pushPlanner(); };
+    window.togglePacked = (id) => { const it = plannerState.bawaan.find(i => i.id === id); if(it) { it.packed = !it.packed; pushPlanner(); } };
+    window.updateNamaBawaan = (id, v) => { const it = plannerState.bawaan.find(i => i.id === id); if(it) { it.nama = v; pushPlanner(); } };
+    window.deleteBawaan = (id) => { plannerState.bawaan = plannerState.bawaan.filter(i => i.id !== id); pushPlanner(); };
+
+    function renderPlanner() {
+      const bList = plannerState.belanja || [];
+      const wList = plannerState.bawaan || [];
+      const totEst = bList.reduce((s,i)=>s+((i.estimasi||0)*(i.qty||1)), 0);
+      const totAkt = bList.filter(i=>i.bought).reduce((s,i)=>s+((i.aktual||0)*(i.qty||1)), 0);
+      const ppl = plannerState.people || 1;
+      const perEst = Math.ceil(totEst / ppl);
+      const realPerP = plannerState.realPerPerson || 0;
+      const totKasReal = realPerP * ppl;
+      const sisaReal = totKasReal - totAkt;
+
+      peopleInput.value = ppl;
+      realPerPersonInput.value = realPerP || '';
+      document.getElementById('totalEstimasiText').textContent = formatRp(totEst);
+      document.getElementById('perPersonEstText').textContent = formatRp(perEst);
+      document.getElementById('totalAktualText').textContent = formatRp(totAkt);
+      document.getElementById('totalKasTerkumpulText').textContent = formatRp(totKasReal);
+      
+      const sisaEl = document.getElementById('sisaUangText');
+      sisaEl.textContent = formatRp(sisaReal);
+      sisaEl.className = sisaReal < 0 ? "text-base font-extrabold text-red-400" : "text-base font-extrabold text-emerald-400";
+
+      document.getElementById('countBelanja').textContent = `${bList.length} Item`;
+      document.getElementById('countBawaan').textContent = `${wList.length} Item`;
+
+      const listB = document.getElementById('listBelanja');
+      listB.innerHTML = '';
+      bList.forEach(item => {
+        let opts = '';
+        for(let n=1; n<=50; n++) opts += `<option value="${n}" ${item.qty===n?'selected':''}>${n} Pcs</option>`;
+        const div = document.createElement('div');
+        div.className = `p-3.5 rounded-2xl border ${item.bought?'bg-slate-800/40 border-slate-800/80 opacity-90':'bg-slate-800/80 border-slate-700/60'}`;
+        div.innerHTML = `
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 flex-1 min-w-0">
+              <input type="checkbox" ${item.bought?'checked':''} onchange="toggleBought(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-orange-500 focus:ring-0 bg-slate-900 cursor-pointer">
+              <input type="text" value="${item.nama}" onchange="updateNamaBelanja(${item.id}, this.value)" class="bg-transparent text-xs font-semibold ${item.bought?'line-through text-slate-400':'text-slate-100'} w-full focus:outline-none focus:bg-slate-900/80 focus:px-2 focus:py-1 focus:rounded-lg">
+            </div>
+            <button onclick="deleteBelanja(${item.id})" class="text-slate-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          </div>
+          <div class="grid grid-cols-3 gap-2 text-[11px] pt-2 border-t border-slate-700/40 items-center">
+            <div><select onchange="updateItemQty(${item.id}, this.value)" class="w-full bg-slate-900 border border-slate-700/70 rounded-lg py-0.5 text-center text-xs font-bold text-orange-400">${opts}</select></div>
+            <div class="relative"><span class="absolute left-1.5 text-[9px] text-slate-500">Rp</span><input type="number" value="${item.estimasi||''}" onchange="updateEstimasi(${item.id}, this.value)" class="w-full bg-slate-900 border border-slate-700/70 rounded-lg pl-5 py-0.5 text-right text-xs"></div>
+            <div class="relative"><span class="absolute left-1.5 text-[9px] text-slate-500">Rp</span><input type="number" value="${item.aktual||''}" onchange="updateAktual(${item.id}, this.value)" ${!item.bought?'disabled':''} class="w-full bg-slate-900 border border-slate-700/70 rounded-lg pl-5 py-0.5 text-right text-xs font-semibold text-orange-400"></div>
+          </div>
+        `;
+        listB.appendChild(div);
+      });
+
+      const listW = document.getElementById('listBawaan');
+      listW.innerHTML = '';
+      wList.forEach(item => {
+        const div = document.createElement('div');
+        div.className = `p-3.5 rounded-2xl border flex items-center justify-between ${item.packed?'bg-slate-800/40 border-slate-800/80 opacity-80':'bg-slate-800/80 border-slate-700/60'}`;
+        div.innerHTML = `
+          <div class="flex items-center gap-2.5 flex-1 min-w-0">
+            <input type="checkbox" ${item.packed?'checked':''} onchange="togglePacked(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-amber-500 focus:ring-0 bg-slate-900 cursor-pointer">
+            <input type="text" value="${item.nama}" onchange="updateNamaBawaan(${item.id}, this.value)" class="bg-transparent text-xs font-semibold ${item.packed?'line-through text-slate-400':'text-slate-100'} w-full focus:outline-none">
+          </div>
+          <button onclick="deleteBawaan(${item.id})" class="text-slate-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+        `;
+        listW.appendChild(div);
+      });
+      lucide.createIcons();
+    }
+
+
+    // SPLIT BILL HANDLERS
+    document.getElementById('formAddPerson').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const input = document.getElementById('inputPersonName');
+      const name = input.value.trim();
+      if (name && !splitState.people.includes(name)) {
+        splitState.people.push(name);
+        input.value = '';
+        pushSplit();
+      }
+    });
+
+    window.removePerson = (name) => {
+      splitState.people = splitState.people.filter(p => p !== name);
+      splitState.items.forEach(it => { if(it.buyers) it.buyers = it.buyers.filter(b => b !== name); });
+      pushSplit();
+    };
+
+    // POP-UP MODAL TAMBAH ITEM
+    const addItemModal = document.getElementById('addItemModal');
+    const btnOpenAddModal = document.getElementById('btnOpenAddModal');
+    const btnCloseItemModal = document.getElementById('btnCloseItemModal');
+    const formModalAddSplitItem = document.getElementById('formModalAddSplitItem');
+
+    btnOpenAddModal.addEventListener('click', () => {
+      document.getElementById('modalInputNama').value = '';
+      document.getElementById('modalInputQty').value = '1';
+      document.getElementById('modalInputHarga').value = '';
+      addItemModal.classList.remove('hidden');
+      document.getElementById('modalInputNama').focus();
+    });
+
+    btnCloseItemModal.addEventListener('click', () => addItemModal.classList.add('hidden'));
+
+    formModalAddSplitItem.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const nama = document.getElementById('modalInputNama').value.trim();
+      const qty = parseInt(document.getElementById('modalInputQty').value) || 1;
+      const harga = parseInt(document.getElementById('modalInputHarga').value) || 0;
 
       if (nama) {
-        if (!appState.belanja) appState.belanja = [];
-        appState.belanja.push({
+        if (!splitState.items) splitState.items = [];
+        splitState.items.push({
           id: Date.now(),
           nama: nama,
           qty: qty,
-          estimasi: estimasi,
-          aktual: 0,
-          bought: false
+          harga: harga,
+          buyers: []
         });
-        document.getElementById('inputNamaBelanja').value = '';
-        inputQtyBelanja.value = '1';
-        document.getElementById('inputEstimasiHarga').value = '';
-        pushData();
+        addItemModal.classList.add('hidden');
+        pushSplit();
       }
     });
 
-    formBawaan.addEventListener('submit', (e) => {
-      e.preventDefault();
-      const nama = document.getElementById('inputNamaBawaan').value.trim();
-
-      if (nama) {
-        if (!appState.bawaan) appState.bawaan = [];
-        appState.bawaan.push({
-          id: Date.now(),
-          nama: nama,
-          packed: false
-        });
-        document.getElementById('inputNamaBawaan').value = '';
-        pushData();
+    window.updateSplitItem = (id, key, val) => {
+      const it = splitState.items.find(i => i.id === id);
+      if(it) {
+        if(key==='harga'||key==='qty') it[key] = parseInt(val)||0;
+        else it[key] = val;
+        pushSplit();
       }
-    });
+    };
 
-    window.toggleBought = function(id) {
-      const item = appState.belanja.find(i => i.id === id);
-      if (item) {
-        item.bought = !item.bought;
-        if (item.bought && (!item.aktual || item.aktual === 0)) {
-          item.aktual = item.estimasi;
+    window.toggleBuyer = (itemId, personName) => {
+      const it = splitState.items.find(i => i.id === itemId);
+      if(it) {
+        if(!it.buyers) it.buyers = [];
+        if(it.buyers.includes(personName)) {
+          it.buyers = it.buyers.filter(b => b !== personName);
+        } else {
+          it.buyers.push(personName);
         }
-        pushData();
+        pushSplit();
       }
     };
 
-    window.updateNamaBelanja = function(id, val) {
-      const item = appState.belanja.find(i => i.id === id);
-      if (item && val.trim() !== '') {
-        item.nama = val.trim();
-        pushData();
-      }
+    window.deleteSplitItem = (id) => {
+      splitState.items = splitState.items.filter(i => i.id !== id);
+      pushSplit();
     };
 
-    window.updateItemQty = function(id, val) {
-      const item = appState.belanja.find(i => i.id === id);
-      if (item) {
-        item.qty = parseInt(val) || 1;
-        pushData();
-      }
-    };
+    document.getElementById('inputTax').addEventListener('change', (e) => { splitState.tax = parseInt(e.target.value)||0; pushSplit(); });
+    document.getElementById('inputService').addEventListener('change', (e) => { splitState.service = parseInt(e.target.value)||0; pushSplit(); });
+    document.getElementById('inputDiscount').addEventListener('change', (e) => { splitState.discount = parseInt(e.target.value)||0; pushSplit(); });
 
-    window.updateEstimasi = function(id, val) {
-      const item = appState.belanja.find(i => i.id === id);
-      if (item) {
-        item.estimasi = parseInt(val) || 0;
-        pushData();
-      }
-    };
-
-    window.updateAktual = function(id, val) {
-      const item = appState.belanja.find(i => i.id === id);
-      if (item) {
-        item.aktual = parseInt(val) || 0;
-        pushData();
-      }
-    };
-
-    window.deleteBelanja = function(id) {
-      appState.belanja = appState.belanja.filter(i => i.id !== id);
-      pushData();
-    };
-
-    window.togglePacked = function(id) {
-      const item = appState.bawaan.find(i => i.id === id);
-      if (item) {
-        item.packed = !item.packed;
-        pushData();
-      }
-    };
-
-    window.updateNamaBawaan = function(id, val) {
-      const item = appState.bawaan.find(i => i.id === id);
-      if (item && val.trim() !== '') {
-        item.nama = val.trim();
-        pushData();
-      }
-    };
-
-    window.deleteBawaan = function(id) {
-      appState.bawaan = appState.bawaan.filter(i => i.id !== id);
-      pushData();
-    };
-
-    function render() {
-      const belanjaList = appState.belanja || [];
-      const bawaanList = appState.bawaan || [];
-
-      const totalEstimasi = belanjaList.reduce((sum, i) => sum + ((i.estimasi || 0) * (i.qty || 1)), 0);
-      const totalAktual = belanjaList
-        .filter(i => i.bought)
-        .reduce((sum, i) => sum + ((i.aktual || 0) * (i.qty || 1)), 0);
-      
-      const people = appState.people || 1;
-      const perPersonEst = Math.ceil(totalEstimasi / people);
-      
-      const realPerPerson = appState.realPerPerson || 0;
-      const totalKasRealTerkumpul = realPerPerson * people;
-      const sisaUangReal = totalKasRealTerkumpul - totalAktual;
-
-      peopleInput.value = people;
-      realPerPersonInput.value = realPerPerson || '';
-      
-      totalEstimasiText.textContent = formatRp(totalEstimasi);
-      perPersonEstText.textContent = formatRp(perPersonEst);
-      totalAktualText.textContent = formatRp(totalAktual);
-      totalKasTerkumpulText.textContent = formatRp(totalKasRealTerkumpul);
-      
-      sisaUangText.textContent = formatRp(sisaUangReal);
-      if (sisaUangReal < 0) {
-        sisaUangText.className = "text-base font-extrabold text-red-400";
+    function renderSplit() {
+      const tagsContainer = document.getElementById('listPeopleTags');
+      tagsContainer.innerHTML = '';
+      if (splitState.people.length === 0) {
+        tagsContainer.innerHTML = `<span class="text-[10px] text-slate-500">Belum ada anggota. Tambahkan nama di atas.</span>`;
       } else {
-        sisaUangText.className = "text-base font-extrabold text-emerald-400";
-      }
-
-      countBelanja.textContent = `${belanjaList.length} Item`;
-      countBawaan.textContent = `${bawaanList.length} Item`;
-
-      listBelanja.innerHTML = '';
-      if (belanjaList.length === 0) {
-        listBelanja.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">Belum ada daftar belanjaan.</p>`;
-      } else {
-        belanjaList.forEach(item => {
-          const itemEl = document.createElement('div');
-          itemEl.className = `p-3.5 rounded-2xl border transition-all duration-200 flex flex-col gap-2.5 ${
-            item.bought 
-              ? 'bg-slate-800/40 border-slate-800/80 opacity-90' 
-              : 'bg-slate-800/80 border-slate-700/60 shadow-sm'
-          }`;
-
-          const subtotalAktual = (item.aktual || 0) * (item.qty || 1);
-
-          let optionsHtml = '';
-          for (let n = 1; n <= 50; n++) {
-            optionsHtml += `<option value="${n}" ${item.qty === n ? 'selected' : ''}>${n} Pcs</option>`;
-          }
-
-          itemEl.innerHTML = `
-            <div class="flex items-center justify-between gap-2">
-              <div class="flex items-center gap-2.5 flex-1 min-w-0">
-                <input type="checkbox" ${item.bought ? 'checked' : ''} onchange="toggleBought(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-orange-500 focus:ring-0 focus:ring-offset-0 bg-slate-900 cursor-pointer shrink-0">
-                <input type="text" value="${item.nama}" onchange="updateNamaBelanja(${item.id}, this.value)" class="bg-transparent text-xs font-semibold ${item.bought ? 'line-through text-slate-400' : 'text-slate-100'} w-full focus:outline-none focus:bg-slate-900/80 focus:px-2 focus:py-1 focus:rounded-lg focus:ring-1 focus:ring-orange-500 transition-all truncate">
-              </div>
-              <button onclick="deleteBelanja(${item.id})" class="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors shrink-0">
-                <i data-lucide="trash-2" class="w-4 h-4"></i>
-              </button>
-            </div>
-
-            <div class="grid grid-cols-3 gap-2 text-[11px] pt-2 border-t border-slate-700/40 items-center">
-              <div class="flex flex-col gap-0.5">
-                <span class="text-[9px] text-slate-400">Jumlah:</span>
-                <select onchange="updateItemQty(${item.id}, this.value)" class="w-full bg-slate-900 border border-slate-700/70 rounded-lg px-2 py-0.5 text-center text-xs font-bold text-orange-400 focus:outline-none focus:border-orange-500 appearance-none cursor-pointer">
-                  ${optionsHtml}
-                </select>
-              </div>
-
-              <div class="flex flex-col gap-0.5">
-                <span class="text-[9px] text-slate-400">Est. Satuan:</span>
-                <div class="relative flex items-center">
-                  <span class="absolute left-1.5 text-[9px] text-slate-500">Rp</span>
-                  <input type="number" value="${item.estimasi || ''}" placeholder="0" onchange="updateEstimasi(${item.id}, this.value)" class="w-full bg-slate-900 border border-slate-700/70 rounded-lg pl-5 pr-1 py-0.5 text-right text-xs font-semibold text-slate-300 focus:outline-none focus:border-orange-500">
-                </div>
-              </div>
-
-              <div class="flex flex-col gap-0.5">
-                <span class="text-[9px] text-slate-400">Harga Beli:</span>
-                <div class="relative flex items-center">
-                  <span class="absolute left-1.5 text-[9px] text-slate-500">Rp</span>
-                  <input type="number" value="${item.aktual || ''}" placeholder="0" onchange="updateAktual(${item.id}, this.value)" ${!item.bought ? 'disabled' : ''} class="w-full bg-slate-900 border border-slate-700/70 rounded-lg pl-5 pr-1 py-0.5 text-right text-xs font-semibold text-orange-400 focus:outline-none focus:border-orange-500 disabled:opacity-40 disabled:bg-slate-950">
-                </div>
-              </div>
-            </div>
-
-            ${item.bought ? `
-              <div class="text-[10px] text-right font-medium text-orange-300/80 pt-0.5">
-                Subtotal Belanja: <span class="font-bold text-orange-400">${formatRp(subtotalAktual)}</span>
-              </div>
-            ` : ''}
-          `;
-          listBelanja.appendChild(itemEl);
+        splitState.people.forEach(p => {
+          const span = document.createElement('span');
+          span.className = "bg-blue-500/20 text-blue-300 border border-blue-500/30 text-xs px-2.5 py-1 rounded-full flex items-center gap-1.5 font-medium";
+          span.innerHTML = `${p} <button onclick="removePerson('${p}')" class="text-slate-400 hover:text-red-400">&times;</button>`;
+          tagsContainer.appendChild(span);
         });
       }
 
-      listBawaan.innerHTML = '';
-      if (bawaanList.length === 0) {
-        listBawaan.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">Belum ada daftar peralatan bawaan.</p>`;
+      const itemsContainer = document.getElementById('listSplitItems');
+      itemsContainer.innerHTML = '';
+      if (splitState.items.length === 0) {
+        itemsContainer.innerHTML = `<p class="text-center text-xs text-slate-500 py-6">Belum ada barang. Klik tombol <b>"+ Tambah Item"</b> di atas.</p>`;
       } else {
-        bawaanList.forEach(item => {
-          const itemEl = document.createElement('div');
-          itemEl.className = `p-3.5 rounded-2xl border transition-all duration-200 flex items-center justify-between gap-2 ${
-            item.packed 
-              ? 'bg-slate-800/40 border-slate-800/80 opacity-80' 
-              : 'bg-slate-800/80 border-slate-700/60 shadow-sm'
-          }`;
+        splitState.items.forEach(it => {
+          const div = document.createElement('div');
+          div.className = "bg-slate-800/80 border border-slate-700/60 rounded-2xl p-3.5 space-y-2.5";
+          
+          let buyersPills = '';
+          splitState.people.forEach(p => {
+            const isSelected = (it.buyers || []).includes(p);
+            buyersPills += `
+              <button onclick="toggleBuyer(${it.id}, '${p}')" class="text-[10px] font-semibold px-2.5 py-1 rounded-lg border transition-all ${
+                isSelected 
+                  ? 'bg-blue-600 border-blue-400 text-white shadow-sm' 
+                  : 'bg-slate-900 border-slate-700 text-slate-400 hover:text-slate-200'
+              }">
+                ${p}
+              </button>
+            `;
+          });
 
-          itemEl.innerHTML = `
-            <div class="flex items-center gap-2.5 flex-1 min-w-0">
-              <input type="checkbox" ${item.packed ? 'checked' : ''} onchange="togglePacked(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-amber-500 focus:ring-0 focus:ring-offset-0 bg-slate-900 cursor-pointer shrink-0">
-              <input type="text" value="${item.nama}" onchange="updateNamaBawaan(${item.id}, this.value)" class="bg-transparent text-xs font-semibold ${item.packed ? 'line-through text-slate-400' : 'text-slate-100'} w-full focus:outline-none focus:bg-slate-900/80 focus:px-2 focus:py-1 focus:rounded-lg focus:ring-1 focus:ring-amber-500 transition-all truncate">
+          div.innerHTML = `
+            <div class="flex items-center justify-between gap-2">
+              <input type="text" value="${it.nama}" onchange="updateSplitItem(${it.id}, 'nama', this.value)" class="bg-transparent font-semibold text-xs text-white flex-1 focus:outline-none focus:bg-slate-900 focus:px-2 focus:py-1 focus:rounded-lg">
+              <button onclick="deleteSplitItem(${it.id})" class="text-slate-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
             </div>
-            <button onclick="deleteBawaan(${item.id})" class="text-slate-500 hover:text-red-400 p-1 rounded-lg transition-colors shrink-0">
-              <i data-lucide="trash-2" class="w-4 h-4"></i>
-            </button>
+
+            <div class="flex items-center gap-2 text-xs">
+              <div class="w-20">
+                <span class="text-[9px] text-slate-400 block">Pcs</span>
+                <input type="number" value="${it.qty||1}" min="1" onchange="updateSplitItem(${it.id}, 'qty', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5 text-center text-xs font-bold text-blue-400">
+              </div>
+              <div class="flex-1">
+                <span class="text-[9px] text-slate-400 block">Harga Satuan (Rp)</span>
+                <input type="number" value="${it.harga||0}" onchange="updateSplitItem(${it.id}, 'harga', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-0.5 text-right text-xs text-white">
+              </div>
+              <div class="text-right pl-2">
+                <span class="text-[9px] text-slate-400 block">Subtotal</span>
+                <span class="font-bold text-xs text-blue-300">${formatRp((it.harga||0)*(it.qty||1))}</span>
+              </div>
+            </div>
+
+            <div class="pt-2 border-t border-slate-700/40">
+              <span class="text-[9px] font-bold uppercase text-slate-400 block mb-1.5">Siapa Yang Mengonsumsi / Membeli:</span>
+              <div class="flex flex-wrap gap-1.5">
+                ${buyersPills || '<span class="text-[10px] text-slate-500">Tambahkan anggota dulu di atas</span>'}
+              </div>
+            </div>
           `;
-          listBawaan.appendChild(itemEl);
+          itemsContainer.appendChild(div);
+        });
+      }
+
+      document.getElementById('inputTax').value = splitState.tax || '';
+      document.getElementById('inputService').value = splitState.service || '';
+      document.getElementById('inputDiscount').value = splitState.discount || '';
+
+      const billResultContainer = document.getElementById('listBillResult');
+      billResultContainer.innerHTML = '';
+
+      const itemsTotal = splitState.items.reduce((s,i) => s + ((i.harga||0)*(i.qty||1)), 0);
+      const netExtra = (splitState.tax || 0) + (splitState.service || 0) - (splitState.discount || 0);
+
+      if (splitState.people.length === 0) {
+        billResultContainer.innerHTML = `<p class="text-center text-xs text-slate-400 py-4">Masukkan anggota rombongan untuk melihat pembagian tagihan.</p>`;
+      } else {
+        splitState.people.forEach(p => {
+          let userSubtotal = 0;
+
+          splitState.items.forEach(it => {
+            const buyers = it.buyers || [];
+            if (buyers.includes(p)) {
+              const itemTotal = (it.harga||0)*(it.qty||1);
+              userSubtotal += (itemTotal / buyers.length);
+            }
+          });
+
+          const propShare = itemsTotal > 0 ? (userSubtotal / itemsTotal) : (1 / splitState.people.length);
+          const userExtraShare = netExtra * propShare;
+          const userFinalTotal = Math.ceil(userSubtotal + userExtraShare);
+
+          const div = document.createElement('div');
+          div.className = "bg-slate-900/80 border border-slate-700/50 rounded-2xl p-3 flex items-center justify-between";
+          div.innerHTML = `
+            <div>
+              <p class="text-xs font-bold text-white">${p}</p>
+              <p class="text-[10px] text-slate-400">Subtotal: ${formatRp(Math.ceil(userSubtotal))} ${netExtra !== 0 ? `+ Ekstra: ${formatRp(Math.ceil(userExtraShare))}` : ''}</p>
+            </div>
+            <p class="text-sm font-extrabold text-blue-400">${formatRp(userFinalTotal)}</p>
+          `;
+          billResultContainer.appendChild(div);
         });
       }
 
