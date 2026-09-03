@@ -50,7 +50,7 @@
     </div>
   </div>
 
-  <!-- MODAL POP-UP TAMBAH ITEM SPLIT BILL (LENGKAP DENGAN PEMILIH ANGGOTA) -->
+  <!-- MODAL POP-UP TAMBAH ITEM SPLIT BILL -->
   <div id="addItemModal" class="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 hidden">
     <div class="bg-slate-900 border border-slate-800 rounded-3xl p-5 w-full max-w-sm space-y-4 shadow-2xl">
       <div class="flex items-center justify-between border-b border-slate-800 pb-3">
@@ -82,8 +82,8 @@
         <!-- PILIHAN PEMBELI / PEMILIK LANGSUNG DI MODAL -->
         <div class="pt-2 border-t border-slate-800">
           <label class="text-[10px] text-slate-400 block mb-1.5 font-bold uppercase tracking-wide">Pilih Pemilik / Pembeli Item Ini:</label>
-          <div id="modalPeopleList" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1 bg-slate-950 rounded-xl border border-slate-800">
-            <!-- Pilihan nama akan di-render dinamis -->
+          <div id="modalPeopleList" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1.5 bg-slate-950 rounded-xl border border-slate-800">
+            <!-- Pilihan nama akan di-render dinamis (netral) -->
           </div>
         </div>
 
@@ -298,7 +298,7 @@
         </div>
       </section>
 
-      <!-- 4. Hasil Tagihan Per Orang (Dengan Rincian Pesanan) -->
+      <!-- 4. Hasil Tagihan Per Orang -->
       <section class="bg-gradient-to-br from-blue-900/40 to-indigo-900/40 border border-blue-500/30 rounded-3xl p-5 space-y-3 shadow-xl">
         <p class="text-xs font-bold uppercase tracking-wider text-blue-300 flex items-center gap-1.5">
           <i data-lucide="badge-dollar-sign" class="w-4 h-4"></i> Rincian Tagihan Per Orang
@@ -350,7 +350,6 @@
       discount: 0
     };
 
-    // Variable temporer penyimpan pembeli terpilih di modal
     let modalSelectedBuyers = [];
 
     // TAB PLANNER NAV LOGIC
@@ -591,7 +590,7 @@
       pushSplit();
     };
 
-    // POP-UP MODAL TAMBAH ITEM (DENGAN INTEGRASI CHECKBOX PEMBELI)
+    // POP-UP MODAL TAMBAH ITEM
     const addItemModal = document.getElementById('addItemModal');
     const btnOpenAddModal = document.getElementById('btnOpenAddModal');
     const btnCloseItemModal = document.getElementById('btnCloseItemModal');
@@ -603,8 +602,8 @@
       document.getElementById('modalInputQty').value = '1';
       document.getElementById('modalInputHarga').value = '';
       
-      // Default: semua anggota terpilih di awal
-      modalSelectedBuyers = [...splitState.people];
+      // KOSONGKAN SELEKSI PEMBELI DI AWAL (TIDAK SEMUA TERPILIH)
+      modalSelectedBuyers = [];
       renderModalPeople();
 
       addItemModal.classList.remove('hidden');
@@ -614,7 +613,7 @@
     function renderModalPeople() {
       modalPeopleList.innerHTML = '';
       if (splitState.people.length === 0) {
-        modalPeopleList.innerHTML = `<span class="text-[10px] text-slate-500 p-2">Belum ada anggota. Tambahkan anggota dulu.</span>`;
+        modalPeopleList.innerHTML = `<span class="text-[10px] text-slate-500 p-2">Belum ada anggota. Tambahkan anggota dulu di atas.</span>`;
         return;
       }
       splitState.people.forEach(p => {
@@ -785,7 +784,6 @@
               const costPerUser = itemTotal / buyers.length;
               userSubtotal += costPerUser;
 
-              // Susun baris detail pesanan
               const qtyInfo = it.qty > 1 ? ` (${it.qty} Pcs)` : '';
               const splitInfo = buyers.length > 1 ? ` <span class="text-[9px] text-slate-500">(dibagi ${buyers.length} orang)</span>` : '';
               userItemsListHTML += `
@@ -811,7 +809,6 @@
               <span class="text-sm font-extrabold text-blue-400">${formatRp(userFinalTotal)}</span>
             </div>
 
-            <!-- DETAIL PESANAN YANG DIPESAN OLEH ORANG INI -->
             <div class="space-y-1 bg-slate-950/60 p-2.5 rounded-xl border border-slate-800/80">
               ${userItemsListHTML || '<p class="text-[10px] text-slate-500 italic">Tidak ada item yang dipilih</p>'}
             </div>
