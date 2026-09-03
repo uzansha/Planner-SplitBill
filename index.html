@@ -83,7 +83,7 @@
         <div class="pt-2 border-t border-slate-800">
           <label class="text-[10px] text-slate-400 block mb-1.5 font-bold uppercase tracking-wide">Pilih Pemilik / Pembeli Item Ini:</label>
           <div id="modalPeopleList" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto p-1.5 bg-slate-950 rounded-xl border border-slate-800">
-            <!-- Pilihan nama akan di-render dinamis (netral) -->
+            <!-- Pilihan nama akan di-render dinamis -->
           </div>
         </div>
 
@@ -224,12 +224,15 @@
         <div id="listBelanja" class="space-y-2.5"></div>
       </section>
 
-      <!-- TAB CONTENT: PERALATAN BAWAAN -->
+      <!-- TAB CONTENT: PERALATAN BAWAAN (DENGAN NAMA PEMBAWA) -->
       <section id="contentBawaan" class="space-y-4 hidden">
-        <form id="formBawaan" class="bg-slate-800/40 border border-slate-800 p-3.5 rounded-2xl flex gap-2">
-          <input type="text" id="inputNamaBawaan" placeholder="Nama alat (Panggangan, Tikar)..." required class="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors">
-          <button type="submit" class="bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-semibold text-xs px-4 py-2.5 rounded-xl border border-amber-500/30 flex items-center justify-center gap-1.5 transition-all shrink-0">
-            <i data-lucide="plus" class="w-4 h-4"></i> Tambah
+        <form id="formBawaan" class="bg-slate-800/40 border border-slate-800 p-3.5 rounded-2xl space-y-2.5">
+          <div class="flex gap-2">
+            <input type="text" id="inputNamaBawaan" placeholder="Nama alat (Panggangan, Tikar)..." required class="flex-1 bg-slate-900 border border-slate-700/80 rounded-xl px-3.5 py-2 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors">
+            <input type="text" id="inputPembawaBawaan" placeholder="Pembawa (opsional)..." class="w-32 bg-slate-900 border border-slate-700/80 rounded-xl px-3 py-2 text-xs text-amber-300 placeholder-slate-500 focus:outline-none focus:border-amber-500 transition-colors">
+          </div>
+          <button type="submit" class="w-full bg-amber-500/20 hover:bg-amber-500/30 text-amber-400 font-semibold text-xs py-2 rounded-xl border border-amber-500/30 flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="plus" class="w-4 h-4"></i> Tambah Peralatan
           </button>
         </form>
 
@@ -484,10 +487,12 @@
     document.getElementById('formBawaan').addEventListener('submit', (e) => {
       e.preventDefault();
       const nama = document.getElementById('inputNamaBawaan').value.trim();
+      const pembawa = document.getElementById('inputPembawaBawaan').value.trim();
       if (nama) {
         if (!plannerState.bawaan) plannerState.bawaan = [];
-        plannerState.bawaan.push({ id: Date.now(), nama, packed: false });
+        plannerState.bawaan.push({ id: Date.now(), nama, pembawa: pembawa || '', packed: false });
         document.getElementById('inputNamaBawaan').value = '';
+        document.getElementById('inputPembawaBawaan').value = '';
         pushPlanner();
       }
     });
@@ -501,8 +506,10 @@
     window.updateEstimasi = (id, v) => { const it = plannerState.belanja.find(i => i.id === id); if(it) { it.estimasi = parseInt(v)||0; pushPlanner(); } };
     window.updateAktual = (id, v) => { const it = plannerState.belanja.find(i => i.id === id); if(it) { it.aktual = parseInt(v)||0; pushPlanner(); } };
     window.deleteBelanja = (id) => { plannerState.belanja = plannerState.belanja.filter(i => i.id !== id); pushPlanner(); };
+    
     window.togglePacked = (id) => { const it = plannerState.bawaan.find(i => i.id === id); if(it) { it.packed = !it.packed; pushPlanner(); } };
     window.updateNamaBawaan = (id, v) => { const it = plannerState.bawaan.find(i => i.id === id); if(it) { it.nama = v; pushPlanner(); } };
+    window.updatePembawaBawaan = (id, v) => { const it = plannerState.bawaan.find(i => i.id === id); if(it) { it.pembawa = v; pushPlanner(); } };
     window.deleteBawaan = (id) => { plannerState.bawaan = plannerState.bawaan.filter(i => i.id !== id); pushPlanner(); };
 
     function renderPlanner() {
@@ -558,13 +565,19 @@
       listW.innerHTML = '';
       wList.forEach(item => {
         const div = document.createElement('div');
-        div.className = `p-3.5 rounded-2xl border flex items-center justify-between ${item.packed?'bg-slate-800/40 border-slate-800/80 opacity-80':'bg-slate-800/80 border-slate-700/60'}`;
+        div.className = `p-3 rounded-2xl border ${item.packed?'bg-slate-800/40 border-slate-800/80 opacity-80':'bg-slate-800/80 border-slate-700/60'} space-y-2`;
         div.innerHTML = `
-          <div class="flex items-center gap-2.5 flex-1 min-w-0">
-            <input type="checkbox" ${item.packed?'checked':''} onchange="togglePacked(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-amber-500 focus:ring-0 bg-slate-900 cursor-pointer">
-            <input type="text" value="${item.nama}" onchange="updateNamaBawaan(${item.id}, this.value)" class="bg-transparent text-xs font-semibold ${item.packed?'line-through text-slate-400':'text-slate-100'} w-full focus:outline-none">
+          <div class="flex items-center justify-between gap-2">
+            <div class="flex items-center gap-2.5 flex-1 min-w-0">
+              <input type="checkbox" ${item.packed?'checked':''} onchange="togglePacked(${item.id})" class="w-4 h-4 rounded-md border-slate-600 text-amber-500 focus:ring-0 bg-slate-900 cursor-pointer">
+              <input type="text" value="${item.nama}" onchange="updateNamaBawaan(${item.id}, this.value)" class="bg-transparent text-xs font-semibold ${item.packed?'line-through text-slate-400':'text-slate-100'} w-full focus:outline-none">
+            </div>
+            <button onclick="deleteBawaan(${item.id})" class="text-slate-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
           </div>
-          <button onclick="deleteBawaan(${item.id})" class="text-slate-500 hover:text-red-400 p-1"><i data-lucide="trash-2" class="w-4 h-4"></i></button>
+          <div class="flex items-center gap-2 pt-1.5 border-t border-slate-700/40 text-[11px]">
+            <span class="text-[10px] text-amber-400 font-medium flex items-center gap-1 shrink-0"><i data-lucide="user-check" class="w-3 h-3"></i> Dibawa Oleh:</span>
+            <input type="text" value="${item.pembawa||''}" placeholder="Ketik nama pembawa..." onchange="updatePembawaBawaan(${item.id}, this.value)" class="bg-slate-900 border border-slate-700/60 rounded-lg px-2.5 py-1 text-xs text-amber-300 w-full placeholder-slate-600 focus:outline-none focus:border-amber-500">
+          </div>
         `;
         listW.appendChild(div);
       });
@@ -602,7 +615,6 @@
       document.getElementById('modalInputQty').value = '1';
       document.getElementById('modalInputHarga').value = '';
       
-      // KOSONGKAN SELEKSI PEMBELI DI AWAL (TIDAK SEMUA TERPILIH)
       modalSelectedBuyers = [];
       renderModalPeople();
 
